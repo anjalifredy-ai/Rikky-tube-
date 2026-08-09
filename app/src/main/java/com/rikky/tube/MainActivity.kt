@@ -22,6 +22,50 @@ class MainActivity : AppCompatActivity() {
     private val subscriptionsUrl = "https://www.youtube.com/feed/subscriptions"
     private val musicUrl = "https://music.youtube.com/"
 
+    private val cleanupJs = """
+        (function() {
+            function hideStuff() {
+                var css = `
+                    ytm-mobile-topbar-renderer,
+                    ytm-pivot-bar-renderer,
+                    tp-yt-app-drawer,
+                    ytm-app-bar-renderer,
+                    #masthead,
+                    ytd-masthead,
+                    #mobile-topbar-renderer,
+                    .pivotBar,
+                    ytm-companion-ad-renderer,
+                    ytm-promoted-sparkles-web-renderer,
+                    ytm-banner-promo-renderer,
+                    ytm-statement-banner-renderer,
+                    ytm-in-feed-ad-layout-renderer,
+                    ytm-ad-slot-renderer,
+                    .ytp-ad-module,
+                    .video-ads,
+                    #player-ads,
+                    ytd-display-ad-renderer,
+                    ytd-promoted-video-renderer,
+                    ytd-ad-slot-renderer {
+                        display: none !important;
+                        height: 0 !important;
+                    }
+                `;
+                var style = document.getElementById('rikky-style');
+                if (!style) {
+                    style = document.createElement('style');
+                    style.id = 'rikky-style';
+                    document.head.appendChild(style);
+                }
+                style.innerHTML = css;
+
+                var skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
+                if (skipBtn) { skipBtn.click(); }
+            }
+            hideStuff();
+            setInterval(hideStuff, 1500);
+        })();
+    """.trimIndent()
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +97,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 swipeRefresh.isRefreshing = false
+                view?.evaluateJavascript(cleanupJs, null)
             }
         }
 
@@ -64,6 +109,9 @@ class MainActivity : AppCompatActivity() {
                     ProgressBar.VISIBLE
                 } else {
                     ProgressBar.GONE
+                }
+                if (newProgress > 50) {
+                    view?.evaluateJavascript(cleanupJs, null)
                 }
             }
         }
