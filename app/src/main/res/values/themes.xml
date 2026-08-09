@@ -1,0 +1,9 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.RikkyTube" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/rikky_black</item>
+        <item name="colorPrimaryVariant">@color/rikky_black</item>
+        <item name="colorOnPrimary">@color/rikky_white</item>
+        <item name="android:statusBarColor">@color/rikky_black</item>
+        <item name="android:windowBackground">@color/rikky_black</item>
+    </style>
+</resources>
