@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private val homeUrl = "https://www.youtube.com/"
     private val shortsUrl = "https://www.youtube.com/shorts"
     private val subscriptionsUrl = "https://www.youtube.com/feed/subscriptions"
+    private val youUrl = "https://www.youtube.com/feed/you"
     private val musicUrl = "https://music.youtube.com/"
 
     private val adDomains = listOf(
@@ -268,6 +269,10 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.nav_subscriptions -> {
                     webView.loadUrl(subscriptionsUrl)
+                    true
+                }
+                R.id.nav_you -> {
+                    webView.loadUrl(youUrl)
                     true
                 }
                 R.id.nav_music -> {
