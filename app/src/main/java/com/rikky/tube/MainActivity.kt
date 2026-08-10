@@ -17,6 +17,7 @@ import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import android.widget.ProgressBar
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fullscreenContainer: FrameLayout
     private lateinit var searchButton: ImageButton
     private lateinit var searchBox: EditText
+    private lateinit var topBar: TextView
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -80,6 +82,7 @@ class MainActivity : AppCompatActivity() {
         fullscreenContainer = findViewById(R.id.fullscreenContainer)
         searchButton = findViewById(R.id.searchButton)
         searchBox = findViewById(R.id.searchBox)
+        topBar = findViewById(R.id.topBar)
 
         setupWebView()
         setupBottomNav()
@@ -211,6 +214,11 @@ class MainActivity : AppCompatActivity() {
                 )
                 fullscreenContainer.visibility = View.VISIBLE
                 webView.visibility = View.GONE
+                topBar.visibility = View.GONE
+                searchBox.visibility = View.GONE
+                searchButton.visibility = View.GONE
+                bottomNav.visibility = View.GONE
+                progressBar.visibility = View.GONE
 
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -228,6 +236,10 @@ class MainActivity : AppCompatActivity() {
                 fullscreenContainer.removeAllViews()
                 fullscreenContainer.visibility = View.GONE
                 webView.visibility = View.VISIBLE
+                topBar.visibility = View.VISIBLE
+                searchBox.visibility = View.VISIBLE
+                searchButton.visibility = View.VISIBLE
+                bottomNav.visibility = View.VISIBLE
                 customView = null
                 customViewCallback?.onCustomViewHidden()
                 customViewCallback = null
