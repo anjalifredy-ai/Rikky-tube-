@@ -1,10 +1,15 @@
 package com.rikky.tube
 
 import android.annotation.SuppressLint
+import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import android.widget.ProgressBar
@@ -22,6 +27,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var bottomNav: BottomNavigationView
+    private lateinit var fullscreenContainer: FrameLayout
+
+    private var customView: View? = null
+    private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     private val homeUrl = "https://www.youtube.com/"
     private val shortsUrl = "https://www.youtube.com/shorts"
@@ -37,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         swipeRefresh = findViewById(R.id.swipeRefresh)
         bottomNav = findViewById(R.id.bottomNav)
+        fullscreenContainer = findViewById(R.id.fullscreenContainer)
 
         setupWebView()
         setupBottomNav()
@@ -68,7 +78,6 @@ class MainActivity : AppCompatActivity() {
         webView.settings.userAgentString = webView.settings.userAgentString +
             " RikkYTubeApp/1.0"
 
-        // CSS ko page load hone se PEHLE hi inject karo (document-start)
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             val css = readCriticalCss()
             if (css.isNotEmpty()) {
@@ -100,6 +109,49 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     ProgressBar.GONE
                 }
+            }
+
+            override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                if (customView != null) {
+                    callback?.onCustomViewHidden()
+                    return
+                }
+                customView = view
+                customViewCallback = callback
+
+                fullscreenContainer.addView(
+                    view,
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                )
+                fullscreenContainer.visibility = View.VISIBLE
+                webView.visibility = View.GONE
+
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                )
+            }
+
+            override fun onHideCustomView() {
+                fullscreenContainer.removeAllViews()
+                fullscreenContainer.visibility = View.GONE
+                webView.visibility = View.VISIBLE
+                customView = null
+                customViewCallback?.onCustomViewHidden()
+                customViewCallback = null
+
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
             }
         }
 
@@ -133,7 +185,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (webView.canGoBack()) {
+        if (customView != null) {
+            webView.webChromeClient?.onHideCustomView()
+        } else if (webView.canGoBack()) {
             webView.goBack()
         } else {
             super.onBackPressed()
