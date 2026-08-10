@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -17,6 +19,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import java.io.BufferedReader
+import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.util.Base64
 import java.util.Collections
@@ -36,6 +39,24 @@ class MainActivity : AppCompatActivity() {
     private val shortsUrl = "https://www.youtube.com/shorts"
     private val subscriptionsUrl = "https://www.youtube.com/feed/subscriptions"
     private val musicUrl = "https://music.youtube.com/"
+
+    private val adDomains = listOf(
+        "doubleclick.net",
+        "googlesyndication.com",
+        "googleadservices.com",
+        "google-analytics.com",
+        "adservice.google.com",
+        "pagead2.googlesyndication.com",
+        "static.doubleclick.net",
+        "youtube.com/api/stats/ads",
+        "youtube.com/pagead",
+        "youtube.com/ptracking",
+        "googletagmanager.com",
+        "googletagservices.com",
+        "amazon-adsystem.com",
+        "adnxs.com",
+        "moatads.com"
+    )
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +89,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isAdRequest(url: String): Boolean {
+        return adDomains.any { url.contains(it, ignoreCase = true) }
+    }
+
+    private fun blockedResponse(): WebResourceResponse {
+        return WebResourceResponse(
+            "text/plain",
+            "utf-8",
+            ByteArrayInputStream("".toByteArray())
+        )
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
         webView.settings.javaScriptEnabled = true
@@ -94,6 +127,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): WebResourceResponse? {
+                val url = request?.url?.toString() ?: return super.shouldInterceptRequest(view, request)
+                if (isAdRequest(url)) {
+                    return blockedResponse()
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 swipeRefresh.isRefreshing = false
