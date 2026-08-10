@@ -12,6 +12,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import android.widget.ProgressBar
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var fullscreenContainer: FrameLayout
+    private lateinit var searchButton: ImageButton
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -48,14 +50,21 @@ class MainActivity : AppCompatActivity() {
         "adservice.google.com",
         "pagead2.googlesyndication.com",
         "static.doubleclick.net",
-        "youtube.com/api/stats/ads",
-        "youtube.com/pagead",
-        "youtube.com/ptracking",
+        "/api/stats/ads",
+        "/pagead",
+        "/ptracking",
+        "/get_midroll",
+        "/api/stats/qoe",
         "googletagmanager.com",
         "googletagservices.com",
         "amazon-adsystem.com",
         "adnxs.com",
-        "moatads.com"
+        "moatads.com",
+        "adsafeprotected.com",
+        "imasdk.googleapis.com",
+        "youtubei/v1/player/ad_break",
+        "/annotations_invideo",
+        "/api/stats/atr"
     )
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -68,12 +77,20 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh = findViewById(R.id.swipeRefresh)
         bottomNav = findViewById(R.id.bottomNav)
         fullscreenContainer = findViewById(R.id.fullscreenContainer)
+        searchButton = findViewById(R.id.searchButton)
 
         setupWebView()
         setupBottomNav()
+        setupSearchButton()
 
         if (savedInstanceState == null) {
             webView.loadUrl(homeUrl)
+        }
+    }
+
+    private fun setupSearchButton() {
+        searchButton.setOnClickListener {
+            webView.loadUrl("https://www.youtube.com/results")
         }
     }
 
