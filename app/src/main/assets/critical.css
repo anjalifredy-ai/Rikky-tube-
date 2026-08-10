@@ -1,0 +1,32 @@
+/* YouTube ka apna mobile nav/header hide karo - hum apna khud ka nav use karte hain */
+ytm-pivot-bar-renderer,
+tp-yt-app-drawer,
+ytd-masthead,
+#masthead,
+ytm-mobile-topbar-renderer,
+.pivotBar,
+#mobile-topbar-renderer,
+ytm-app-bar-renderer {
+    display: none !important;
+}
+
+/* Content ko upar tak extend karo (nav hatne se bane gap ko fix karo) */
+#page-manager, ytd-app, #content, body {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Common ad-slots hide karo (best-effort, sab nahi hatenge) */
+ytm-promoted-sparkles-web-renderer,
+ytm-banner-promo-renderer,
+ytm-statement-banner-renderer,
+ytm-companion-ad-renderer,
+ytm-in-feed-ad-layout-renderer,
+ytd-display-ad-renderer,
+ytd-promoted-video-renderer,
+ytd-ad-slot-renderer,
+ytd-in-feed-ad-layout-renderer,
+#player-ads,
+.ytp-ad-module {
+    display: none !important;
+}
