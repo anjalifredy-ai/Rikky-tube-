@@ -9,6 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import android.widget.ProgressBar
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.Base64
+import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,50 +27,6 @@ class MainActivity : AppCompatActivity() {
     private val shortsUrl = "https://www.youtube.com/shorts"
     private val subscriptionsUrl = "https://www.youtube.com/feed/subscriptions"
     private val musicUrl = "https://music.youtube.com/"
-
-    private val cleanupJs = """
-        (function() {
-            function hideStuff() {
-                var css = `
-                    ytm-mobile-topbar-renderer,
-                    ytm-pivot-bar-renderer,
-                    tp-yt-app-drawer,
-                    ytm-app-bar-renderer,
-                    #masthead,
-                    ytd-masthead,
-                    #mobile-topbar-renderer,
-                    .pivotBar,
-                    ytm-companion-ad-renderer,
-                    ytm-promoted-sparkles-web-renderer,
-                    ytm-banner-promo-renderer,
-                    ytm-statement-banner-renderer,
-                    ytm-in-feed-ad-layout-renderer,
-                    ytm-ad-slot-renderer,
-                    .ytp-ad-module,
-                    .video-ads,
-                    #player-ads,
-                    ytd-display-ad-renderer,
-                    ytd-promoted-video-renderer,
-                    ytd-ad-slot-renderer {
-                        display: none !important;
-                        height: 0 !important;
-                    }
-                `;
-                var style = document.getElementById('rikky-style');
-                if (!style) {
-                    style = document.createElement('style');
-                    style.id = 'rikky-style';
-                    document.head.appendChild(style);
-                }
-                style.innerHTML = css;
-
-                var skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
-                if (skipBtn) { skipBtn.click(); }
-            }
-            hideStuff();
-            setInterval(hideStuff, 1500);
-        })();
-    """.trimIndent()
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,6 +46,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun readCriticalCss(): String {
+        return try {
+            val inputStream = assets.open("critical.css")
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val text = reader.readText()
+            reader.close()
+            text
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
@@ -93,11 +68,26 @@ class MainActivity : AppCompatActivity() {
         webView.settings.userAgentString = webView.settings.userAgentString +
             " RikkYTubeApp/1.0"
 
+        // CSS ko page load hone se PEHLE hi inject karo (document-start)
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            val css = readCriticalCss()
+            if (css.isNotEmpty()) {
+                val encoded = Base64.getEncoder().encodeToString(css.toByteArray(Charsets.UTF_8))
+                val js = """
+                    (function(){
+                        var style = document.createElement('style');
+                        style.textContent = window.atob('$encoded');
+                        (document.head || document.documentElement).appendChild(style);
+                    })();
+                """.trimIndent()
+                WebViewCompat.addDocumentStartJavaScript(webView, js, Collections.singleton("*"))
+            }
+        }
+
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 swipeRefresh.isRefreshing = false
-                view?.evaluateJavascript(cleanupJs, null)
             }
         }
 
@@ -109,9 +99,6 @@ class MainActivity : AppCompatActivity() {
                     ProgressBar.VISIBLE
                 } else {
                     ProgressBar.GONE
-                }
-                if (newProgress > 50) {
-                    view?.evaluateJavascript(cleanupJs, null)
                 }
             }
         }
