@@ -3,6 +3,8 @@ package com.rikky.tube
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -17,10 +19,10 @@ import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ProgressBar
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import android.widget.ProgressBar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -35,15 +37,28 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
-    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var fullscreenContainer: FrameLayout
     private lateinit var searchButton: ImageButton
     private lateinit var searchBox: EditText
     private lateinit var topBar: TextView
 
+    private lateinit var controlsRoot: View
+    private lateinit var videoSeekBar: SeekBar
+    private lateinit var playPauseButton: ImageButton
+    private lateinit var rewindButton: ImageButton
+    private lateinit var forwardButton: ImageButton
+    private lateinit var timeText: TextView
+    private lateinit var speedButton: TextView
+    private lateinit var qualityButton: TextView
+    private lateinit var fullscreenToggleButton: ImageButton
+
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var isUserSeeking = false
+    private var isOnWatchPage = false
 
     private val homeUrl = "https://www.youtube.com/"
     private val shortsUrl = "https://www.youtube.com/shorts"
@@ -78,19 +93,175 @@ class MainActivity : AppCompatActivity() {
 
         webView = findViewById(R.id.webView)
         progressBar = findViewById(R.id.progressBar)
-        swipeRefresh = findViewById(R.id.swipeRefresh)
         bottomNav = findViewById(R.id.bottomNav)
         fullscreenContainer = findViewById(R.id.fullscreenContainer)
         searchButton = findViewById(R.id.searchButton)
         searchBox = findViewById(R.id.searchBox)
         topBar = findViewById(R.id.topBar)
 
+        controlsRoot = findViewById(R.id.controlsRoot)
+        videoSeekBar = findViewById(R.id.videoSeekBar)
+        playPauseButton = findViewById(R.id.playPauseButton)
+        rewindButton = findViewById(R.id.rewindButton)
+        forwardButton = findViewById(R.id.forwardButton)
+        timeText = findViewById(R.id.timeText)
+        speedButton = findViewById(R.id.speedButton)
+        qualityButton = findViewById(R.id.qualityButton)
+        fullscreenToggleButton = findViewById(R.id.fullscreenToggleButton)
+
         setupWebView()
         setupBottomNav()
         setupSearch()
+        setupPlayerControls()
 
         if (savedInstanceState == null) {
             webView.loadUrl(homeUrl)
+        }
+    }
+
+    private fun setupPlayerControls() {
+        playPauseButton.setOnClickListener {
+            webView.evaluateJavascript(
+                """
+                (function(){
+                    var v = document.querySelector('video');
+                    if (v) { v.paused ? v.play() : v.pause(); }
+                })();
+                """.trimIndent(), null
+            )
+        }
+
+        rewindButton.setOnClickListener {
+            webView.evaluateJavascript(
+                """
+                (function(){
+                    var v = document.querySelector('video');
+                    if (v) { v.currentTime = Math.max(0, v.currentTime - 10); }
+                })();
+                """.trimIndent(), null
+            )
+        }
+
+        forwardButton.setOnClickListener {
+            webView.evaluateJavascript(
+                """
+                (function(){
+                    var v = document.querySelector('video');
+                    if (v) { v.currentTime = Math.min(v.duration, v.currentTime + 10); }
+                })();
+                """.trimIndent(), null
+            )
+        }
+
+        videoSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                isUserSeeking = true
+            }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                val percent = (seekBar?.progress ?: 0) / 1000.0
+                webView.evaluateJavascript(
+                    """
+                    (function(){
+                        var v = document.querySelector('video');
+                        if (v && v.duration) { v.currentTime = v.duration * $percent; }
+                    })();
+                    """.trimIndent(), null
+                )
+                isUserSeeking = false
+            }
+        })
+
+        webView.setOnTouchListener { _, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP && isOnWatchPage) {
+                toggleControlsVisibility()
+            }
+            false
+        }
+
+        fullscreenToggleButton.setOnClickListener {
+            webView.evaluateJavascript(
+                """
+                (function(){
+                    var btn = document.querySelector('.ytp-fullscreen-button');
+                    if (btn) { btn.click(); }
+                })();
+                """.trimIndent(), null
+            )
+        }
+
+        startProgressUpdates()
+    }
+
+    private fun toggleControlsVisibility() {
+        if (controlsRoot.visibility == View.VISIBLE) {
+            controlsRoot.visibility = View.GONE
+        } else {
+            controlsRoot.visibility = View.VISIBLE
+            handler.postDelayed({
+                if (!isUserSeeking) controlsRoot.visibility = View.GONE
+            }, 4000)
+        }
+    }
+
+    private fun startProgressUpdates() {
+        val updateRunnable = object : Runnable {
+            override fun run() {
+                if (isOnWatchPage && !isUserSeeking) {
+                    webView.evaluateJavascript(
+                        """
+                        (function(){
+                            var v = document.querySelector('video');
+                            if (!v) return 'none';
+                            return JSON.stringify({
+                                current: v.currentTime,
+                                duration: v.duration,
+                                paused: v.paused
+                            });
+                        })();
+                        """.trimIndent()
+                    ) { result ->
+                        updatePlayerUi(result)
+                    }
+                }
+                handler.postDelayed(this, 500)
+            }
+        }
+        handler.post(updateRunnable)
+    }
+
+    private fun updatePlayerUi(jsResult: String?) {
+        if (jsResult == null || jsResult == "null" || jsResult.contains("none")) return
+        try {
+            val cleaned = jsResult.trim('"').replace("\\\"", "\"")
+            val current = Regex("\"current\":([\\d.]+)").find(cleaned)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+            val duration = Regex("\"duration\":([\\d.]+)").find(cleaned)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+            val paused = cleaned.contains("\"paused\":true")
+
+            if (duration > 0) {
+                videoSeekBar.progress = ((current / duration) * 1000).toInt()
+            }
+            timeText.text = "${formatTime(current)} / ${formatTime(duration)}"
+            playPauseButton.setImageResource(
+                if (paused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause
+            )
+        } catch (e: Exception) {
+            // ignore
+        }
+    }
+
+    private fun formatTime(seconds: Double): String {
+        if (seconds.isNaN() || seconds < 0) return "0:00"
+        val totalSeconds = seconds.toInt()
+        val mins = totalSeconds / 60
+        val secs = totalSeconds % 60
+        return String.format("%d:%02d", mins, secs)
+    }
+
+    private fun checkIfWatchPage(url: String?) {
+        isOnWatchPage = url != null && (url.contains("/watch") || url.contains("music.youtube.com/watch"))
+        if (!isOnWatchPage) {
+            controlsRoot.visibility = View.GONE
         }
     }
 
@@ -144,7 +315,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     private fun setupWebView() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
@@ -183,7 +354,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                swipeRefresh.isRefreshing = false
+                checkIfWatchPage(url)
             }
         }
 
@@ -220,6 +391,7 @@ class MainActivity : AppCompatActivity() {
                 searchButton.visibility = View.GONE
                 bottomNav.visibility = View.GONE
                 progressBar.visibility = View.GONE
+                controlsRoot.visibility = View.GONE
 
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -249,10 +421,6 @@ class MainActivity : AppCompatActivity() {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
                 window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
             }
-        }
-
-        swipeRefresh.setOnRefreshListener {
-            webView.reload()
         }
     }
 
