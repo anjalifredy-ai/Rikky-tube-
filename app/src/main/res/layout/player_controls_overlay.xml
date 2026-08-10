@@ -5,9 +5,10 @@
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
     android:orientation="vertical"
-    android:background="#CC000000"
+    android:background="#E6000000"
     android:visibility="gone"
-    android:id="@+id/controlsRoot">
+    android:id="@+id/controlsRoot"
+    android:paddingTop="6dp">
 
     <SeekBar
         android:id="@+id/videoSeekBar"
@@ -15,9 +16,10 @@
         android:layout_height="wrap_content"
         android:max="1000"
         android:progressTint="@color/rikky_red"
+        android:progressBackgroundTint="@color/rikky_gray_text"
         android:thumbTint="@color/rikky_red"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp" />
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,24 +28,43 @@
         android:gravity="center_vertical"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:paddingBottom="10dp">
+        android:paddingBottom="12dp"
+        android:paddingTop="2dp">
 
-        <TextView
-            android:id="@+id/currentTime"
+        <ImageButton
+            android:id="@+id/rewindButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0:00"
-            android:textColor="@color/rikky_white"
-            android:textSize="12sp" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_media_rew"
+            app:tint="@color/rikky_white" />
 
         <ImageButton
             android:id="@+id/playPauseButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_pause"
             app:tint="@color/rikky_white" />
+
+        <ImageButton
+            android:id="@+id/forwardButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_media_ff"
+            app:tint="@color/rikky_white" />
+
+        <TextView
+            android:id="@+id/timeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="0:00 / 0:00"
+            android:textColor="@color/rikky_white"
+            android:textSize="12sp" />
 
         <View
             android:layout_width="0dp"
@@ -59,7 +80,7 @@
             android:textSize="13sp"
             android:textStyle="bold"
             android:padding="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            android:background="@drawable/pill_background" />
 
         <TextView
             android:id="@+id/qualityButton"
@@ -71,16 +92,16 @@
             android:textStyle="bold"
             android:padding="8dp"
             android:layout_marginStart="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            android:background="@drawable/pill_background" />
 
-        <TextView
-            android:id="@+id/totalTime"
+        <ImageButton
+            android:id="@+id/fullscreenToggleButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0:00"
-            android:textColor="@color/rikky_white"
-            android:textSize="12sp"
-            android:layout_marginStart="8dp" />
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_zoom"
+            app:tint="@color/rikky_white" />
 
     </LinearLayout>
 
