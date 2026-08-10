@@ -13,6 +13,10 @@
         android:icon="@android:drawable/ic_menu_recent_history"
         android:title="Subs" />
     <item
+        android:id="@+id/nav_you"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="You" />
+    <item
         android:id="@+id/nav_music"
         android:icon="@android:drawable/ic_lock_silent_mode_off"
         android:title="Music" />
