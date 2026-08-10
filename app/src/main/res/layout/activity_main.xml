@@ -79,6 +79,10 @@
                 android:background="@color/rikky_black"
                 android:visibility="gone" />
 
+            <include
+                layout="@layout/player_controls_overlay"
+                android:id="@+id/playerControls" />
+
         </FrameLayout>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
