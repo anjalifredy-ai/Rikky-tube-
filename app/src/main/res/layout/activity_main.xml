@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/rikky_black">
+    android:background="@color/rikky_black"
+    android:fitsSystemWindows="true">
 
     <TextView
         android:id="@+id/topBar"
@@ -12,15 +13,34 @@
         android:background="@color/rikky_black"
         android:text="RikkY Tube"
         android:textColor="@color/rikky_red"
-        android:textSize="20sp"
+        android:textSize="18sp"
         android:textStyle="bold"
         android:paddingStart="16dp"
         android:paddingTop="14dp"
         android:paddingBottom="14dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintBottom_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/searchBox"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/rikky_dark_gray"
+        android:hint="Search YouTube"
+        android:textColorHint="@color/rikky_gray_text"
+        android:textColor="@color/rikky_white"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:singleLine="true"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:textSize="14sp"
+        app:layout_constraintTop_toTopOf="@id/topBar"
+        app:layout_constraintBottom_toBottomOf="@id/topBar"
+        app:layout_constraintStart_toEndOf="@id/topBar"
+        app:layout_constraintEnd_toStartOf="@id/searchButton"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="8dp" />
 
     <ImageButton
         android:id="@+id/searchButton"
