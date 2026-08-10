@@ -3,14 +3,18 @@ package com.rikky.tube
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +26,7 @@ import androidx.webkit.WebViewFeature
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
+import java.net.URLEncoder
 import java.util.Base64
 import java.util.Collections
 
@@ -33,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var fullscreenContainer: FrameLayout
     private lateinit var searchButton: ImageButton
+    private lateinit var searchBox: EditText
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -43,64 +49,23 @@ class MainActivity : AppCompatActivity() {
     private val musicUrl = "https://music.youtube.com/"
 
     private val adDomains = listOf(
-        "doubleclick.net",
-        "googlesyndication.com",
-        "googleadservices.com",
-        "google-analytics.com",
-        "adservice.google.com",
-        "pagead2.googlesyndication.com",
-        "static.doubleclick.net",
-        "googletagmanager.com",
-        "googletagservices.com",
-        "amazon-adsystem.com",
-        "adnxs.com",
-        "moatads.com",
-        "adsafeprotected.com",
-        "imasdk.googleapis.com",
-        "2mdn.net",
-        "adform.net",
-        "adroll.com",
-        "criteo.com",
-        "criteo.net",
-        "outbrain.com",
-        "taboola.com",
-        "scorecardresearch.com",
-        "quantserve.com",
-        "adsystem.com",
-        "advertising.com",
-        "serving-sys.com",
-        "yieldmanager.com",
-        "casalemedia.com",
-        "rubiconproject.com",
-        "openx.net",
-        "pubmatic.com",
-        "smartadserver.com",
-        "adtechus.com",
-        "media.net",
-        "innovid.com",
-        "flashtalking.com",
-        "sitescout.com",
-        "chartboost.com",
-        "unityads.unity3d.com",
-        "vungle.com",
-        "applovin.com",
-        "startapp.com",
-        "airpush.com",
-        "youtube.com/api/stats/ads",
-        "youtube.com/pagead",
-        "youtube.com/ptracking",
-        "youtube.com/get_midroll",
-        "youtube.com/api/stats/qoe",
-        "youtube.com/api/stats/atr",
-        "youtubei/v1/player/ad_break",
-        "youtubei/v1/log_event",
-        "/annotations_invideo",
-        "/generate_204",
-        "/pagead/",
-        "/ptracking",
-        "/api/stats/ads",
-        "/api/stats/watchtime",
-        "/csi_204"
+        "doubleclick.net", "googlesyndication.com", "googleadservices.com",
+        "google-analytics.com", "adservice.google.com", "pagead2.googlesyndication.com",
+        "static.doubleclick.net", "googletagmanager.com", "googletagservices.com",
+        "amazon-adsystem.com", "adnxs.com", "moatads.com", "adsafeprotected.com",
+        "imasdk.googleapis.com", "2mdn.net", "adform.net", "adroll.com",
+        "criteo.com", "criteo.net", "outbrain.com", "taboola.com",
+        "scorecardresearch.com", "quantserve.com", "adsystem.com", "advertising.com",
+        "serving-sys.com", "yieldmanager.com", "casalemedia.com", "rubiconproject.com",
+        "openx.net", "pubmatic.com", "smartadserver.com", "adtechus.com",
+        "media.net", "innovid.com", "flashtalking.com", "sitescout.com",
+        "chartboost.com", "unityads.unity3d.com", "vungle.com", "applovin.com",
+        "startapp.com", "airpush.com",
+        "youtube.com/api/stats/ads", "youtube.com/pagead", "youtube.com/ptracking",
+        "youtube.com/get_midroll", "youtube.com/api/stats/qoe", "youtube.com/api/stats/atr",
+        "youtubei/v1/player/ad_break", "youtubei/v1/log_event",
+        "/annotations_invideo", "/generate_204", "/pagead/", "/ptracking",
+        "/api/stats/ads", "/api/stats/watchtime", "/csi_204"
     )
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -114,19 +79,40 @@ class MainActivity : AppCompatActivity() {
         bottomNav = findViewById(R.id.bottomNav)
         fullscreenContainer = findViewById(R.id.fullscreenContainer)
         searchButton = findViewById(R.id.searchButton)
+        searchBox = findViewById(R.id.searchBox)
 
         setupWebView()
         setupBottomNav()
-        setupSearchButton()
+        setupSearch()
 
         if (savedInstanceState == null) {
             webView.loadUrl(homeUrl)
         }
     }
 
-    private fun setupSearchButton() {
+    private fun performSearch() {
+        val query = searchBox.text.toString().trim()
+        if (query.isNotEmpty()) {
+            val encoded = URLEncoder.encode(query, "UTF-8")
+            webView.loadUrl("https://www.youtube.com/results?search_query=$encoded")
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(searchBox.windowToken, 0)
+            searchBox.clearFocus()
+        }
+    }
+
+    private fun setupSearch() {
         searchButton.setOnClickListener {
-            webView.loadUrl("https://www.youtube.com/results")
+            performSearch()
+        }
+        searchBox.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                (event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
+                performSearch()
+                true
+            } else {
+                false
+            }
         }
     }
 
