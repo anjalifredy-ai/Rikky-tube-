@@ -35,23 +35,23 @@ import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var webView: WebView
-    private lateinit var progressBar: ProgressBar
-    private lateinit var bottomNav: BottomNavigationView
-    private lateinit var fullscreenContainer: FrameLayout
-    private lateinit var searchButton: ImageButton
-    private lateinit var searchBox: EditText
-    private lateinit var topBar: TextView
+    private var webView: WebView? = null
+    private var progressBar: ProgressBar? = null
+    private var bottomNav: BottomNavigationView? = null
+    private var fullscreenContainer: FrameLayout? = null
+    private var searchButton: ImageButton? = null
+    private var searchBox: EditText? = null
+    private var topBar: TextView? = null
 
-    private lateinit var controlsRoot: View
-    private lateinit var videoSeekBar: SeekBar
-    private lateinit var playPauseButton: ImageButton
-    private lateinit var rewindButton: ImageButton
-    private lateinit var forwardButton: ImageButton
-    private lateinit var timeText: TextView
-    private lateinit var speedButton: TextView
-    private lateinit var qualityButton: TextView
-    private lateinit var fullscreenToggleButton: ImageButton
+    private var controlsRoot: View? = null
+    private var videoSeekBar: SeekBar? = null
+    private var playPauseButton: ImageButton? = null
+    private var rewindButton: ImageButton? = null
+    private var forwardButton: ImageButton? = null
+    private var timeText: TextView? = null
+    private var speedButton: TextView? = null
+    private var qualityButton: TextView? = null
+    private var fullscreenToggleButton: ImageButton? = null
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
@@ -91,23 +91,27 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        webView = findViewById(R.id.webView)
-        progressBar = findViewById(R.id.progressBar)
-        bottomNav = findViewById(R.id.bottomNav)
-        fullscreenContainer = findViewById(R.id.fullscreenContainer)
-        searchButton = findViewById(R.id.searchButton)
-        searchBox = findViewById(R.id.searchBox)
-        topBar = findViewById(R.id.topBar)
+        try {
+            webView = findViewById(R.id.webView)
+            progressBar = findViewById(R.id.progressBar)
+            bottomNav = findViewById(R.id.bottomNav)
+            fullscreenContainer = findViewById(R.id.fullscreenContainer)
+            searchButton = findViewById(R.id.searchButton)
+            searchBox = findViewById(R.id.searchBox)
+            topBar = findViewById(R.id.topBar)
 
-        controlsRoot = findViewById(R.id.controlsRoot)
-        videoSeekBar = findViewById(R.id.videoSeekBar)
-        playPauseButton = findViewById(R.id.playPauseButton)
-        rewindButton = findViewById(R.id.rewindButton)
-        forwardButton = findViewById(R.id.forwardButton)
-        timeText = findViewById(R.id.timeText)
-        speedButton = findViewById(R.id.speedButton)
-        qualityButton = findViewById(R.id.qualityButton)
-        fullscreenToggleButton = findViewById(R.id.fullscreenToggleButton)
+            controlsRoot = findViewById(R.id.controlsRoot)
+            videoSeekBar = findViewById(R.id.videoSeekBar)
+            playPauseButton = findViewById(R.id.playPauseButton)
+            rewindButton = findViewById(R.id.rewindButton)
+            forwardButton = findViewById(R.id.forwardButton)
+            timeText = findViewById(R.id.timeText)
+            speedButton = findViewById(R.id.speedButton)
+            qualityButton = findViewById(R.id.qualityButton)
+            fullscreenToggleButton = findViewById(R.id.fullscreenToggleButton)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
         setupWebView()
         setupBottomNav()
@@ -115,13 +119,13 @@ class MainActivity : AppCompatActivity() {
         setupPlayerControls()
 
         if (savedInstanceState == null) {
-            webView.loadUrl(homeUrl)
+            webView?.loadUrl(homeUrl)
         }
     }
 
     private fun setupPlayerControls() {
-        playPauseButton.setOnClickListener {
-            webView.evaluateJavascript(
+        playPauseButton?.setOnClickListener {
+            webView?.evaluateJavascript(
                 """
                 (function(){
                     var v = document.querySelector('video');
@@ -131,8 +135,8 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        rewindButton.setOnClickListener {
-            webView.evaluateJavascript(
+        rewindButton?.setOnClickListener {
+            webView?.evaluateJavascript(
                 """
                 (function(){
                     var v = document.querySelector('video');
@@ -142,8 +146,8 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        forwardButton.setOnClickListener {
-            webView.evaluateJavascript(
+        forwardButton?.setOnClickListener {
+            webView?.evaluateJavascript(
                 """
                 (function(){
                     var v = document.querySelector('video');
@@ -153,14 +157,14 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        videoSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        videoSeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
                 isUserSeeking = true
             }
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 val percent = (seekBar?.progress ?: 0) / 1000.0
-                webView.evaluateJavascript(
+                webView?.evaluateJavascript(
                     """
                     (function(){
                         var v = document.querySelector('video');
@@ -172,15 +176,8 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        webView.setOnTouchListener { _, event ->
-            if (event.action == android.view.MotionEvent.ACTION_UP && isOnWatchPage) {
-                toggleControlsVisibility()
-            }
-            false
-        }
-
-        fullscreenToggleButton.setOnClickListener {
-            webView.evaluateJavascript(
+        fullscreenToggleButton?.setOnClickListener {
+            webView?.evaluateJavascript(
                 """
                 (function(){
                     var btn = document.querySelector('.ytp-fullscreen-button');
@@ -193,22 +190,11 @@ class MainActivity : AppCompatActivity() {
         startProgressUpdates()
     }
 
-    private fun toggleControlsVisibility() {
-        if (controlsRoot.visibility == View.VISIBLE) {
-            controlsRoot.visibility = View.GONE
-        } else {
-            controlsRoot.visibility = View.VISIBLE
-            handler.postDelayed({
-                if (!isUserSeeking) controlsRoot.visibility = View.GONE
-            }, 4000)
-        }
-    }
-
     private fun startProgressUpdates() {
         val updateRunnable = object : Runnable {
             override fun run() {
                 if (isOnWatchPage && !isUserSeeking) {
-                    webView.evaluateJavascript(
+                    webView?.evaluateJavascript(
                         """
                         (function(){
                             var v = document.querySelector('video');
@@ -239,10 +225,10 @@ class MainActivity : AppCompatActivity() {
             val paused = cleaned.contains("\"paused\":true")
 
             if (duration > 0) {
-                videoSeekBar.progress = ((current / duration) * 1000).toInt()
+                videoSeekBar?.progress = ((current / duration) * 1000).toInt()
             }
-            timeText.text = "${formatTime(current)} / ${formatTime(duration)}"
-            playPauseButton.setImageResource(
+            timeText?.text = "${formatTime(current)} / ${formatTime(duration)}"
+            playPauseButton?.setImageResource(
                 if (paused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause
             )
         } catch (e: Exception) {
@@ -261,26 +247,31 @@ class MainActivity : AppCompatActivity() {
     private fun checkIfWatchPage(url: String?) {
         isOnWatchPage = url != null && (url.contains("/watch") || url.contains("music.youtube.com/watch"))
         if (!isOnWatchPage) {
-            controlsRoot.visibility = View.GONE
+            controlsRoot?.visibility = View.GONE
+        } else {
+            controlsRoot?.visibility = View.VISIBLE
+            handler.postDelayed({
+                if (!isUserSeeking) controlsRoot?.visibility = View.GONE
+            }, 4000)
         }
     }
 
     private fun performSearch() {
-        val query = searchBox.text.toString().trim()
+        val query = searchBox?.text?.toString()?.trim() ?: ""
         if (query.isNotEmpty()) {
             val encoded = URLEncoder.encode(query, "UTF-8")
-            webView.loadUrl("https://www.youtube.com/results?search_query=$encoded")
-            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.hideSoftInputFromWindow(searchBox.windowToken, 0)
-            searchBox.clearFocus()
+            webView?.loadUrl("https://www.youtube.com/results?search_query=$encoded")
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.hideSoftInputFromWindow(searchBox?.windowToken, 0)
+            searchBox?.clearFocus()
         }
     }
 
     private fun setupSearch() {
-        searchButton.setOnClickListener {
+        searchButton?.setOnClickListener {
             performSearch()
         }
-        searchBox.setOnEditorActionListener { _, actionId, event ->
+        searchBox?.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 (event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
                 performSearch()
@@ -315,32 +306,37 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
+    @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
-        webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true
-        webView.settings.loadWithOverviewMode = true
-        webView.settings.useWideViewPort = true
-        webView.settings.mediaPlaybackRequiresUserGesture = false
-        webView.settings.userAgentString = webView.settings.userAgentString +
-            " RikkYTubeApp/1.0"
+        val wv = webView ?: return
 
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-            val css = readCriticalCss()
-            if (css.isNotEmpty()) {
-                val encoded = Base64.getEncoder().encodeToString(css.toByteArray(Charsets.UTF_8))
-                val js = """
-                    (function(){
-                        var style = document.createElement('style');
-                        style.textContent = window.atob('$encoded');
-                        (document.head || document.documentElement).appendChild(style);
-                    })();
-                """.trimIndent()
-                WebViewCompat.addDocumentStartJavaScript(webView, js, Collections.singleton("*"))
+        wv.settings.javaScriptEnabled = true
+        wv.settings.domStorageEnabled = true
+        wv.settings.loadWithOverviewMode = true
+        wv.settings.useWideViewPort = true
+        wv.settings.mediaPlaybackRequiresUserGesture = false
+        wv.settings.userAgentString = wv.settings.userAgentString + " RikkYTubeApp/1.0"
+
+        try {
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                val css = readCriticalCss()
+                if (css.isNotEmpty()) {
+                    val encoded = Base64.getEncoder().encodeToString(css.toByteArray(Charsets.UTF_8))
+                    val js = """
+                        (function(){
+                            var style = document.createElement('style');
+                            style.textContent = window.atob('$encoded');
+                            (document.head || document.documentElement).appendChild(style);
+                        })();
+                    """.trimIndent()
+                    WebViewCompat.addDocumentStartJavaScript(wv, js, Collections.singleton("*"))
+                }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
-        webView.webViewClient = object : WebViewClient() {
+        wv.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(
                 view: WebView?,
                 request: WebResourceRequest?
@@ -358,11 +354,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webView.webChromeClient = object : WebChromeClient() {
+        wv.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
-                progressBar.progress = newProgress
-                progressBar.visibility = if (newProgress in 1..99) {
+                progressBar?.progress = newProgress
+                progressBar?.visibility = if (newProgress in 1..99) {
                     ProgressBar.VISIBLE
                 } else {
                     ProgressBar.GONE
@@ -377,21 +373,21 @@ class MainActivity : AppCompatActivity() {
                 customView = view
                 customViewCallback = callback
 
-                fullscreenContainer.addView(
+                fullscreenContainer?.addView(
                     view,
                     ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
                 )
-                fullscreenContainer.visibility = View.VISIBLE
-                webView.visibility = View.GONE
-                topBar.visibility = View.GONE
-                searchBox.visibility = View.GONE
-                searchButton.visibility = View.GONE
-                bottomNav.visibility = View.GONE
-                progressBar.visibility = View.GONE
-                controlsRoot.visibility = View.GONE
+                fullscreenContainer?.visibility = View.VISIBLE
+                webView?.visibility = View.GONE
+                topBar?.visibility = View.GONE
+                searchBox?.visibility = View.GONE
+                searchButton?.visibility = View.GONE
+                bottomNav?.visibility = View.GONE
+                progressBar?.visibility = View.GONE
+                controlsRoot?.visibility = View.GONE
 
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -406,13 +402,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onHideCustomView() {
-                fullscreenContainer.removeAllViews()
-                fullscreenContainer.visibility = View.GONE
-                webView.visibility = View.VISIBLE
-                topBar.visibility = View.VISIBLE
-                searchBox.visibility = View.VISIBLE
-                searchButton.visibility = View.VISIBLE
-                bottomNav.visibility = View.VISIBLE
+                fullscreenContainer?.removeAllViews()
+                fullscreenContainer?.visibility = View.GONE
+                webView?.visibility = View.VISIBLE
+                topBar?.visibility = View.VISIBLE
+                searchBox?.visibility = View.VISIBLE
+                searchButton?.visibility = View.VISIBLE
+                bottomNav?.visibility = View.VISIBLE
                 customView = null
                 customViewCallback?.onCustomViewHidden()
                 customViewCallback = null
@@ -425,26 +421,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNav() {
-        bottomNav.setOnItemSelectedListener { item ->
+        bottomNav?.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    webView.loadUrl(homeUrl)
+                    webView?.loadUrl(homeUrl)
                     true
                 }
                 R.id.nav_shorts -> {
-                    webView.loadUrl(shortsUrl)
+                    webView?.loadUrl(shortsUrl)
                     true
                 }
                 R.id.nav_subscriptions -> {
-                    webView.loadUrl(subscriptionsUrl)
+                    webView?.loadUrl(subscriptionsUrl)
                     true
                 }
                 R.id.nav_you -> {
-                    webView.loadUrl(youUrl)
+                    webView?.loadUrl(youUrl)
                     true
                 }
                 R.id.nav_music -> {
-                    webView.loadUrl(musicUrl)
+                    webView?.loadUrl(musicUrl)
                     true
                 }
                 else -> false
@@ -454,9 +450,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         if (customView != null) {
-            webView.webChromeClient?.onHideCustomView()
-        } else if (webView.canGoBack()) {
-            webView.goBack()
+            webView?.webChromeClient?.onHideCustomView()
+        } else if (webView?.canGoBack() == true) {
+            webView?.goBack()
         } else {
             super.onBackPressed()
         }
