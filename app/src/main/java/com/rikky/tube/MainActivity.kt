@@ -90,36 +90,7 @@ class MainActivity : AppCompatActivity() {
         "doubleclick", "googleads", "adserver", "adservice"
     )
 
-    private val playerAdBlockJs = """
-        (function() {
-            function skipAdsAndHide() {
-                try {
-                    var skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');
-                    if (skipBtn) { skipBtn.click(); }
-
-                    var video = document.querySelector('video');
-                    var adShowing = document.querySelector('.ad-showing, .ytp-ad-player-overlay');
-                    if (video && adShowing) {
-                        video.muted = true;
-                        if (video.duration && isFinite(video.duration)) {
-                            video.currentTime = video.duration;
-                        }
-                    }
-
-                    var adEls = document.querySelectorAll(
-                        '.ytp-ad-overlay-container, .ytp-ad-text-overlay, ytd-promoted-sparkles-web-renderer, ' +
-                        'ytm-promoted-sparkles-web-renderer, ytd-display-ad-renderer, ytd-promoted-video-renderer, ' +
-                        'ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytm-companion-ad-renderer'
-                    );
-                    for (var i = 0; i < adEls.length; i++) {
-                        adEls[i].style.display = 'none';
-                    }
-                } catch (e) {}
-            }
-            skipAdsAndHide();
-            setInterval(skipAdsAndHide, 800);
-        })();
-    """.trimIndent()
+    private val playerAdBlockJs = "(function(){function skipAdsAndHide(){try{var skipBtn=document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');if(skipBtn){skipBtn.click();}var video=document.querySelector('video');var adShowing=document.querySelector('.ad-showing, .ytp-ad-player-overlay');if(video&&adShowing){video.muted=true;if(video.duration&&isFinite(video.duration)){video.currentTime=video.duration;}}var adEls=document.querySelectorAll('.ytp-ad-overlay-container, .ytp-ad-text-overlay, ytd-promoted-sparkles-web-renderer, ytm-promoted-sparkles-web-renderer, ytd-display-ad-renderer, ytd-promoted-video-renderer, ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytm-companion-ad-renderer');for(var i=0;i<adEls.length;i++){adEls[i].style.display='none';}}catch(e){}}skipAdsAndHide();setInterval(skipAdsAndHide,800);})();"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -179,34 +150,22 @@ class MainActivity : AppCompatActivity() {
     private fun setupPlayerControls() {
         playPauseButton?.setOnClickListener {
             webView?.evaluateJavascript(
-                """
-                (function(){
-                    var v = document.querySelector('video');
-                    if (v) { v.paused ? v.play() : v.pause(); }
-                })();
-                """.trimIndent(), null
+                "(function(){var v=document.querySelector('video');if(v){v.paused?v.play():v.pause();}})();",
+                null
             )
         }
 
         rewindButton?.setOnClickListener {
             webView?.evaluateJavascript(
-                """
-                (function(){
-                    var v = document.querySelector('video');
-                    if (v) { v.currentTime = Math.max(0, v.currentTime - 10); }
-                })();
-                """.trimIndent(), null
+                "(function(){var v=document.querySelector('video');if(v){v.currentTime=Math.max(0,v.currentTime-10);}})();",
+                null
             )
         }
 
         forwardButton?.setOnClickListener {
             webView?.evaluateJavascript(
-                """
-                (function(){
-                    var v = document.querySelector('video');
-                    if (v) { v.currentTime = Math.min(v.duration, v.currentTime + 10); }
-                })();
-                """.trimIndent(), null
+                "(function(){var v=document.querySelector('video');if(v){v.currentTime=Math.min(v.duration,v.currentTime+10);}})();",
+                null
             )
         }
 
@@ -218,12 +177,8 @@ class MainActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 val percent = (seekBar?.progress ?: 0) / 1000.0
                 webView?.evaluateJavascript(
-                    """
-                    (function(){
-                        var v = document.querySelector('video');
-                        if (v && v.duration) { v.currentTime = v.duration * $percent; }
-                    })();
-                    """.trimIndent(), null
+                    "(function(){var v=document.querySelector('video');if(v&&v.duration){v.currentTime=v.duration*$percent;}})();",
+                    null
                 )
                 isUserSeeking = false
             }
@@ -231,12 +186,8 @@ class MainActivity : AppCompatActivity() {
 
         fullscreenToggleButton?.setOnClickListener {
             webView?.evaluateJavascript(
-                """
-                (function(){
-                    var btn = document.querySelector('.ytp-fullscreen-button');
-                    if (btn) { btn.click(); }
-                })();
-                """.trimIndent(), null
+                "(function(){var btn=document.querySelector('.ytp-fullscreen-button');if(btn){btn.click();}})();",
+                null
             )
         }
 
@@ -248,17 +199,7 @@ class MainActivity : AppCompatActivity() {
             override fun run() {
                 if (isOnWatchPage && !isUserSeeking) {
                     webView?.evaluateJavascript(
-                        """
-                        (function(){
-                            var v = document.querySelector('video');
-                            if (!v) return 'none';
-                            return JSON.stringify({
-                                current: v.currentTime,
-                                duration: v.duration,
-                                paused: v.paused
-                            });
-                        })();
-                        """.trimIndent()
+                        "(function(){var v=document.querySelector('video');if(!v)return 'none';return JSON.stringify({current:v.currentTime,duration:v.duration,paused:v.paused});})();"
                     ) { result ->
                         updatePlayerUi(result)
                     }
@@ -381,13 +322,7 @@ class MainActivity : AppCompatActivity() {
                 val css = readCriticalCss()
                 if (css.isNotEmpty()) {
                     val encoded = Base64.getEncoder().encodeToString(css.toByteArray(Charsets.UTF_8))
-                    val js = """
-                        (function(){
-                            var style = document.createElement('style');
-                            style.textContent = window.atob('$encoded');
-                            (document.head || document.documentElement).appendChild(style);
-                        })();
-                    """.trimIndent()
+                    val js = "(function(){var style=document.createElement('style');style.textContent=window.atob('$encoded');(document.head||document.documentElement).appendChild(style);})();"
                     WebViewCompat.addDocumentStartJavaScript(wv, js, Collections.singleton("*"))
                 }
             }
@@ -493,4 +428,28 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.nav_subscriptions -> {
                     webView?.loadUrl(subscriptionsUrl)
-            
+                    true
+                }
+                R.id.nav_you -> {
+                    webView?.loadUrl(youUrl)
+                    true
+                }
+                R.id.nav_music -> {
+                    webView?.loadUrl(musicUrl)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    override fun onBackPressed() {
+        if (customView != null) {
+            webView?.webChromeClient?.onHideCustomView()
+        } else if (webView?.canGoBack() == true) {
+            webView?.goBack()
+        } else {
+            super.onBackPressed()
+        }
+    }
+}
