@@ -75,9 +75,113 @@
             android:background="@color/rikky_black"
             android:visibility="gone" />
 
-        <include
-            layout="@layout/player_controls_overlay"
-            android:id="@+id/playerControls" />
+        <LinearLayout
+            android:id="@+id/controlsRoot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:background="#E6000000"
+            android:visibility="gone"
+            android:paddingTop="6dp"
+            android:elevation="20dp">
+
+            <SeekBar
+                android:id="@+id/videoSeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="1000"
+                android:progressTint="@color/rikky_red"
+                android:progressBackgroundTint="@color/rikky_gray_text"
+                android:thumbTint="@color/rikky_red"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="12dp"
+                android:paddingTop="2dp">
+
+                <ImageButton
+                    android:id="@+id/rewindButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_rew"
+                    app:tint="@color/rikky_white" />
+
+                <ImageButton
+                    android:id="@+id/playPauseButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_marginEnd="14dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_pause"
+                    app:tint="@color/rikky_white" />
+
+                <ImageButton
+                    android:id="@+id/forwardButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_ff"
+                    app:tint="@color/rikky_white" />
+
+                <TextView
+                    android:id="@+id/timeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="0:00 / 0:00"
+                    android:textColor="@color/rikky_white"
+                    android:textSize="12sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/speedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1x"
+                    android:textColor="@color/rikky_white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:padding="8dp"
+                    android:background="@drawable/pill_background" />
+
+                <TextView
+                    android:id="@+id/qualityButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Auto"
+                    android:textColor="@color/rikky_white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:padding="8dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/pill_background" />
+
+                <ImageButton
+                    android:id="@+id/fullscreenToggleButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_zoom"
+                    app:tint="@color/rikky_white" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </FrameLayout>
 
