@@ -80,13 +80,46 @@ class MainActivity : AppCompatActivity() {
         "openx.net", "pubmatic.com", "smartadserver.com", "adtechus.com",
         "media.net", "innovid.com", "flashtalking.com", "sitescout.com",
         "chartboost.com", "unityads.unity3d.com", "vungle.com", "applovin.com",
-        "startapp.com", "airpush.com",
+        "startapp.com", "airpush.com", "ads.youtube.com",
         "youtube.com/api/stats/ads", "youtube.com/pagead", "youtube.com/ptracking",
         "youtube.com/get_midroll", "youtube.com/api/stats/qoe", "youtube.com/api/stats/atr",
         "youtubei/v1/player/ad_break", "youtubei/v1/log_event",
+        "youtubei/v1/att/get", "/player_204", "/ad_break",
         "/annotations_invideo", "/generate_204", "/pagead/", "/ptracking",
-        "/api/stats/ads", "/api/stats/watchtime", "/csi_204"
+        "/api/stats/ads", "/api/stats/watchtime", "/csi_204",
+        "doubleclick", "googleads", "adserver", "adservice"
     )
+
+    private val playerAdBlockJs = """
+        (function() {
+            function skipAdsAndHide() {
+                try {
+                    var skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');
+                    if (skipBtn) { skipBtn.click(); }
+
+                    var video = document.querySelector('video');
+                    var adShowing = document.querySelector('.ad-showing, .ytp-ad-player-overlay');
+                    if (video && adShowing) {
+                        video.muted = true;
+                        if (video.duration && isFinite(video.duration)) {
+                            video.currentTime = video.duration;
+                        }
+                    }
+
+                    var adEls = document.querySelectorAll(
+                        '.ytp-ad-overlay-container, .ytp-ad-text-overlay, ytd-promoted-sparkles-web-renderer, ' +
+                        'ytm-promoted-sparkles-web-renderer, ytd-display-ad-renderer, ytd-promoted-video-renderer, ' +
+                        'ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytm-companion-ad-renderer'
+                    );
+                    for (var i = 0; i < adEls.length; i++) {
+                        adEls[i].style.display = 'none';
+                    }
+                } catch (e) {}
+            }
+            skipAdsAndHide();
+            setInterval(skipAdsAndHide, 800);
+        })();
+    """.trimIndent()
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,8 +159,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Polls the actual page URL (via JS) since YouTube is a single-page app
-    // and onPageFinished doesn't fire when navigating between videos.
     private fun startUrlWatcher() {
         val checkRunnable = object : Runnable {
             override fun run() {
@@ -138,6 +169,7 @@ class MainActivity : AppCompatActivity() {
                         checkIfWatchPage(url)
                     }
                 }
+                webView?.evaluateJavascript(playerAdBlockJs, null)
                 handler.postDelayed(this, 800)
             }
         }
@@ -378,6 +410,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 checkIfWatchPage(url)
+                webView?.evaluateJavascript(playerAdBlockJs, null)
             }
         }
 
@@ -460,28 +493,4 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.nav_subscriptions -> {
                     webView?.loadUrl(subscriptionsUrl)
-                    true
-                }
-                R.id.nav_you -> {
-                    webView?.loadUrl(youUrl)
-                    true
-                }
-                R.id.nav_music -> {
-                    webView?.loadUrl(musicUrl)
-                    true
-                }
-                else -> false
-            }
-        }
-    }
-
-    override fun onBackPressed() {
-        if (customView != null) {
-            webView?.webChromeClient?.onHideCustomView()
-        } else if (webView?.canGoBack() == true) {
-            webView?.goBack()
-        } else {
-            super.onBackPressed()
-        }
-    }
-}
+            
