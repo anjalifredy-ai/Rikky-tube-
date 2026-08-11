@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var isUserSeeking = false
     private var isOnWatchPage = false
+    private var lastCheckedUrl = ""
+    private var controlsEverShown = false
 
     private val homeUrl = "https://www.youtube.com/"
     private val shortsUrl = "https://www.youtube.com/shorts"
@@ -117,10 +119,29 @@ class MainActivity : AppCompatActivity() {
         setupBottomNav()
         setupSearch()
         setupPlayerControls()
+        startUrlWatcher()
 
         if (savedInstanceState == null) {
             webView?.loadUrl(homeUrl)
         }
+    }
+
+    // Polls the actual page URL (via JS) since YouTube is a single-page app
+    // and onPageFinished doesn't fire when navigating between videos.
+    private fun startUrlWatcher() {
+        val checkRunnable = object : Runnable {
+            override fun run() {
+                webView?.evaluateJavascript("(function(){ return location.href; })();") { result ->
+                    val url = result?.trim('"') ?: ""
+                    if (url != lastCheckedUrl) {
+                        lastCheckedUrl = url
+                        checkIfWatchPage(url)
+                    }
+                }
+                handler.postDelayed(this, 800)
+            }
+        }
+        handler.post(checkRunnable)
     }
 
     private fun setupPlayerControls() {
@@ -226,6 +247,13 @@ class MainActivity : AppCompatActivity() {
 
             if (duration > 0) {
                 videoSeekBar?.progress = ((current / duration) * 1000).toInt()
+                if (!controlsEverShown) {
+                    controlsEverShown = true
+                    controlsRoot?.visibility = View.VISIBLE
+                    handler.postDelayed({
+                        if (!isUserSeeking) controlsRoot?.visibility = View.GONE
+                    }, 4000)
+                }
             }
             timeText?.text = "${formatTime(current)} / ${formatTime(duration)}"
             playPauseButton?.setImageResource(
@@ -245,14 +273,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkIfWatchPage(url: String?) {
+        val wasOnWatchPage = isOnWatchPage
         isOnWatchPage = url != null && (url.contains("/watch") || url.contains("music.youtube.com/watch"))
         if (!isOnWatchPage) {
             controlsRoot?.visibility = View.GONE
-        } else {
-            controlsRoot?.visibility = View.VISIBLE
-            handler.postDelayed({
-                if (!isUserSeeking) controlsRoot?.visibility = View.GONE
-            }, 4000)
+            controlsEverShown = false
+        } else if (!wasOnWatchPage) {
+            controlsEverShown = false
         }
     }
 
