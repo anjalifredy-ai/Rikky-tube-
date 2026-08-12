@@ -50,7 +50,12 @@ ytd-in-feed-ad-layout-renderer,
     display: none !important;
 }
 
-/* Video ko poora player-area cover karne do */
+/* Video player ki height FIX karo taaki hamara Android control-bar exact isi ke niche aaye */
+#player, #player-container, #movie_player, ytd-player {
+    height: 220px !important;
+    max-height: 220px !important;
+}
+
 .html5-video-container,
 video {
     width: 100% !important;
