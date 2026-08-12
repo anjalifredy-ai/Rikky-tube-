@@ -181,7 +181,7 @@ class MainActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 val percent = (seekBar?.progress ?: 0) / 1000.0
                 webView?.evaluateJavascript(
-                    "(function(){var v=document.querySelector('video');if(v&&v.duration){v.currentTime=v.duration*$percent;}})();",
+                    "(function(){var v=document.querySelector('video');if(v&&v.duration){v.currentTime=v.duration*" + percent + ";}})();",
                     null
                 )
                 isUserSeeking = false
@@ -204,14 +204,15 @@ class MainActivity : AppCompatActivity() {
     private fun showSpeedMenu() {
         val btn = speedButton ?: return
         val popup = PopupMenu(this, btn)
-        speedOptions.forEach { popup.menu.add(it) }
+        for (option in speedOptions) {
+            popup.menu.add(option)
+        }
         popup.setOnMenuItemClickListener { item ->
             val label = item.title.toString()
-            val rate = label.replace("x", "").toDoubleOrNull() ?: 1.0
-            webView?.evaluateJavascript(
-                "(function(){var v=document.querySelector('video');if(v){v.playbackRate=$rate;}})();",
-                null
-            )
+            val cleanedLabel = label.replace("x", "")
+            val rate = cleanedLabel.toDoubleOrNull() ?: 1.0
+            val js = "(function(){var v=document.querySelector('video');if(v){v.playbackRate=" + rate + ";}})();"
+            webView?.evaluateJavascript(js, null)
             speedButton?.text = label
             true
         }
@@ -221,7 +222,9 @@ class MainActivity : AppCompatActivity() {
     private fun showQualityMenu() {
         val btn = qualityButton ?: return
         val popup = PopupMenu(this, btn)
-        qualityOptions.forEach { popup.menu.add(it) }
+        for (option in qualityOptions) {
+            popup.menu.add(option)
+        }
         popup.setOnMenuItemClickListener { item ->
             val label = item.title.toString()
             applyQuality(label)
@@ -241,19 +244,7 @@ class MainActivity : AppCompatActivity() {
             "240p" to "small"
         )
         val ytLevel = qualityMap[label] ?: "auto"
-        val js = """
-            (function(){
-                try {
-                    var player = document.getElementById('movie_player');
-                    if (player && typeof player.setPlaybackQualityRange === 'function') {
-                        player.setPlaybackQualityRange('$ytLevel', '$ytLevel');
-                    }
-                    if (player && typeof player.setPlaybackQuality === 'function') {
-                        player.setPlaybackQuality('$ytLevel');
-                    }
-                } catch(e) {}
-            })();
-        """.trimIndent()
+        val js = "(function(){try{var player=document.getElementById('movie_player');if(player&&typeof player.setPlaybackQualityRange==='function'){player.setPlaybackQualityRange('" + ytLevel + "','" + ytLevel + "');}if(player&&typeof player.setPlaybackQuality==='function'){player.setPlaybackQuality('" + ytLevel + "');}}catch(e){}})();"
         webView?.evaluateJavascript(js, null)
     }
 
@@ -291,7 +282,7 @@ class MainActivity : AppCompatActivity() {
                     }, 4000)
                 }
             }
-            timeText?.text = "${formatTime(current)} / ${formatTime(duration)}"
+            timeText?.text = formatTime(current) + " / " + formatTime(duration)
             playPauseButton?.setImageResource(
                 if (paused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause
             )
@@ -323,7 +314,7 @@ class MainActivity : AppCompatActivity() {
         val query = searchBox?.text?.toString()?.trim() ?: ""
         if (query.isNotEmpty()) {
             val encoded = URLEncoder.encode(query, "UTF-8")
-            webView?.loadUrl("https://www.youtube.com/results?search_query=$encoded")
+            webView?.loadUrl("https://www.youtube.com/results?search_query=" + encoded)
             val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
             imm?.hideSoftInputFromWindow(searchBox?.windowToken, 0)
             searchBox?.clearFocus()
@@ -385,7 +376,7 @@ class MainActivity : AppCompatActivity() {
                 val css = readCriticalCss()
                 if (css.isNotEmpty()) {
                     val encoded = Base64.getEncoder().encodeToString(css.toByteArray(Charsets.UTF_8))
-                    val js = "(function(){var style=document.createElement('style');style.textContent=window.atob('$encoded');(document.head||document.documentElement).appendChild(style);})();"
+                    val js = "(function(){var style=document.createElement('style');style.textContent=window.atob('" + encoded + "');(document.head||document.documentElement).appendChild(style);})();"
                     WebViewCompat.addDocumentStartJavaScript(wv, js, Collections.singleton("*"))
                 }
             }
@@ -479,4 +470,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNav() {
-        bottomNav?.s
+        bottomNav?.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    webView?.loadUrl(homeUrl)
+                    true
+                }
+                R.id.nav_shorts -> {
+                    webView?.loadUrl(shortsUrl)
+                    true
+                }
+                R.id.nav_subscriptions -> {
+                    webView?.loadUrl(subscriptionsUrl)
+                    true
+                }
+                R.id.nav_you -> {
+                    webView?.loadUrl(youUrl)
+                    true
+                }
+                R.id.nav_music -> {
+                    webView?.loadUrl(musicUrl)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    override fun onBackPressed() {
+        if (customView != null) {
+            webView?.webChromeClient?.onHideCustomView()
+        } else if (webView?.canGoBack() == true) {
+            webView?.goBack()
+        } else {
+            super.onBackPressed()
+        }
+    }
+}
