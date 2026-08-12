@@ -19,6 +19,7 @@ import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
@@ -68,6 +69,9 @@ class MainActivity : AppCompatActivity() {
     private val youUrl = "https://www.youtube.com/feed/you"
     private val musicUrl = "https://music.youtube.com/"
 
+    private val speedOptions = listOf("0.5x", "0.75x", "1x", "1.25x", "1.5x", "2x")
+    private val qualityOptions = listOf("Auto", "1080p", "720p", "480p", "360p", "240p")
+
     private val adDomains = listOf(
         "doubleclick.net", "googlesyndication.com", "googleadservices.com",
         "google-analytics.com", "adservice.google.com", "pagead2.googlesyndication.com",
@@ -90,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         "doubleclick", "googleads", "adserver", "adservice"
     )
 
-    private val playerAdBlockJs = "(function(){function skipAdsAndHide(){try{var skipBtn=document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');if(skipBtn){skipBtn.click();}var video=document.querySelector('video');var adShowing=document.querySelector('.ad-showing, .ytp-ad-player-overlay');if(video&&adShowing){video.muted=true;if(video.duration&&isFinite(video.duration)){video.currentTime=video.duration;}}var adEls=document.querySelectorAll('.ytp-ad-overlay-container, .ytp-ad-text-overlay, ytd-promoted-sparkles-web-renderer, ytm-promoted-sparkles-web-renderer, ytd-display-ad-renderer, ytd-promoted-video-renderer, ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytm-companion-ad-renderer');for(var i=0;i<adEls.length;i++){adEls[i].style.display='none';}}catch(e){}}skipAdsAndHide();setInterval(skipAdsAndHide,800);})();"
+    private val playerAdBlockJs = "(function(){function skipAdsAndHide(){try{var skipBtn=document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');if(skipBtn){skipBtn.click();}var adEls=document.querySelectorAll('.ytp-ad-overlay-container, .ytp-ad-text-overlay, ytd-promoted-sparkles-web-renderer, ytm-promoted-sparkles-web-renderer, ytd-display-ad-renderer, ytd-promoted-video-renderer, ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytm-companion-ad-renderer');for(var i=0;i<adEls.length;i++){adEls[i].style.display='none';}}catch(e){}}skipAdsAndHide();setInterval(skipAdsAndHide,800);})();"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -191,7 +195,66 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
+        speedButton?.setOnClickListener { showSpeedMenu() }
+        qualityButton?.setOnClickListener { showQualityMenu() }
+
         startProgressUpdates()
+    }
+
+    private fun showSpeedMenu() {
+        val btn = speedButton ?: return
+        val popup = PopupMenu(this, btn)
+        speedOptions.forEach { popup.menu.add(it) }
+        popup.setOnMenuItemClickListener { item ->
+            val label = item.title.toString()
+            val rate = label.replace("x", "").toDoubleOrNull() ?: 1.0
+            webView?.evaluateJavascript(
+                "(function(){var v=document.querySelector('video');if(v){v.playbackRate=$rate;}})();",
+                null
+            )
+            speedButton?.text = label
+            true
+        }
+        popup.show()
+    }
+
+    private fun showQualityMenu() {
+        val btn = qualityButton ?: return
+        val popup = PopupMenu(this, btn)
+        qualityOptions.forEach { popup.menu.add(it) }
+        popup.setOnMenuItemClickListener { item ->
+            val label = item.title.toString()
+            applyQuality(label)
+            qualityButton?.text = label
+            true
+        }
+        popup.show()
+    }
+
+    private fun applyQuality(label: String) {
+        val qualityMap = mapOf(
+            "Auto" to "auto",
+            "1080p" to "hd1080",
+            "720p" to "hd720",
+            "480p" to "large",
+            "360p" to "medium",
+            "240p" to "small"
+        )
+        val ytLevel = qualityMap[label] ?: "auto"
+        val js = """
+            (function(){
+                try {
+                    var player = document.getElementById('movie_player');
+                    if (player && typeof player.setPlaybackQualityRange === 'function') {
+                        player.setPlaybackQualityRange('$ytLevel', '$ytLevel');
+                    }
+                    if (player && typeof player.setPlaybackQuality === 'function') {
+                        player.setPlaybackQuality('$ytLevel');
+                    }
+                } catch(e) {}
+            })();
+        """.trimIndent()
+        webView?.evaluateJavascript(js, null)
     }
 
     private fun startProgressUpdates() {
@@ -416,40 +479,4 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNav() {
-        bottomNav?.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    webView?.loadUrl(homeUrl)
-                    true
-                }
-                R.id.nav_shorts -> {
-                    webView?.loadUrl(shortsUrl)
-                    true
-                }
-                R.id.nav_subscriptions -> {
-                    webView?.loadUrl(subscriptionsUrl)
-                    true
-                }
-                R.id.nav_you -> {
-                    webView?.loadUrl(youUrl)
-                    true
-                }
-                R.id.nav_music -> {
-                    webView?.loadUrl(musicUrl)
-                    true
-                }
-                else -> false
-            }
-        }
-    }
-
-    override fun onBackPressed() {
-        if (customView != null) {
-            webView?.webChromeClient?.onHideCustomView()
-        } else if (webView?.canGoBack() == true) {
-            webView?.goBack()
-        } else {
-            super.onBackPressed()
-        }
-    }
-}
+        bottomNav?.s
