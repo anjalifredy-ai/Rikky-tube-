@@ -30,3 +30,30 @@ ytd-in-feed-ad-layout-renderer,
 .ytp-ad-module {
     display: none !important;
 }
+
+/* YouTube ke apne video-player controls poori tarah hide karo - hum apna control bar use kar rahe hain */
+.ytp-chrome-bottom,
+.ytp-chrome-top,
+.ytp-gradient-bottom,
+.ytp-gradient-top,
+.ytp-progress-bar-container,
+.ytp-play-button,
+.ytp-large-play-button,
+.ytp-title,
+.ytp-watermark,
+.ytp-pause-overlay,
+.ytp-ce-element,
+.ytp-endscreen-content,
+.ytp-chapter-hover-container,
+.ytp-spinner,
+.html5-endscreen {
+    display: none !important;
+}
+
+/* Video ko poora player-area cover karne do */
+.html5-video-container,
+video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
